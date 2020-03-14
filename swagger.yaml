@@ -1,0 +1,129 @@
+openapi: 3.0.0
+info:
+  title: Ruby on Rails reference API project
+  version: 1.0.0
+paths:
+  /api/games:
+    get:
+      summary: Returns a list of games
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 5
+                    status:
+                      type: string
+                      example: "ended"
+                    total_score:
+                      type: integer
+                      example: 123
+                    timestamp:
+                      type: string
+                      example: "2020-01-01T10:10:10Z"
+        '401':
+          description: Unauthorized
+    post:
+      summary: Creates a new game
+      responses:
+        '201':
+          description: Created
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+  /api/games/{game_id}:
+    get:
+      summary: Return game details
+      parameters:
+        - name: game_id
+          in: path
+          required: true
+          description: Game ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 5
+                  status:
+                    type: string
+                    example: "ended"
+                  total_score:
+                    type: integer
+                    example: 123
+                  timestamp:
+                    type: string
+                    example: "2020-01-01T10:10:10Z"
+                  frames:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                          example: "open"
+                        number:
+                          type: integer
+                          example: 1
+                        throws:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              score:
+                                type: string
+                                example: 7
+                              number:
+                                type: integer
+                                example: 1
+        '401':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+  /api/games/{game_id}/throws:
+    post:
+      description: Register a new throw
+      parameters:
+        - name: game_id
+          in: path
+          required: true
+          description: Game ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                throw:
+                  type: object
+                  properties:
+                    score:
+                      type: integer
+                      example: 5
+      responses:
+        '201':
+          description: Created
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Resource not found

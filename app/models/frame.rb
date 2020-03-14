@@ -1,0 +1,49 @@
+# frozen_string_literal: true
+
+class Frame < ApplicationRecord
+  include ActiveModel::Serializers::JSON
+
+  # Frame statuses
+  OPEN     = 'open'
+  CLOSED   = 'closed'
+  STATUSES = [OPEN, CLOSED].freeze
+
+  # A game has a maximum of 10 frames
+  MAX_NUMBER = 10
+
+  belongs_to :game
+  has_many :throws, dependent: :destroy
+
+  # validate :validate_score
+  validates :status, inclusion: { in: STATUSES }
+  validates :number, numericality: {
+    only_integer: true,
+    greater_than_or_equal_to: 1,
+    less_than_or_equal_to: MAX_NUMBER,
+    message: 'must be in range [1, 10]'
+  }
+
+  def attributes
+    {
+      'status' => '',
+      'number' => 0,
+      'throws' => []
+    }
+  end
+
+  def open?
+    status == OPEN
+  end
+
+  def closed?
+    status == CLOSED
+  end
+
+  def close
+    self.status = CLOSED
+  end
+
+  def last_frame?
+    number >= MAX_NUMBER
+  end
+end

@@ -1,0 +1,15 @@
+version: '3.7'
+
+services:
+  api:
+    build:
+      context: .
+    image: bowling-api
+    container_name: bowling_api
+    environment:
+      RAILS_ENV: 'development'
+    command: rails server --binding 0.0.0.0
+    volumes:
+      - .:/app
+    ports:
+      - "3000:3000"

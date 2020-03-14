@@ -1,0 +1,62 @@
+require: rubocop-rails
+
+AllCops:
+  TargetRubyVersion: 2.7
+  Exclude:
+    - "**/vendor/**/*"
+    - "bin/*"
+    - "db/schema.rb"
+
+Rails:
+  Enabled: true
+
+Metrics/ClassLength:
+  Max: 100
+
+Metrics/BlockLength:
+  Max: 30
+  Exclude:
+    - "spec/**/*.rb"
+    - "config/environments/*.rb"
+
+Metrics/MethodLength:
+  Max: 30
+
+Metrics/PerceivedComplexity:
+  Max: 10
+
+Metrics/CyclomaticComplexity:
+  Max: 10
+
+Layout/LineLength:
+  Max: 100
+  Exclude:
+    - config/environments/*.rb
+
+Style/BlockComments:
+  Enabled: false
+
+Style/CommentedKeyword:
+  Enabled: false
+
+Style/Documentation:
+  Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Enabled: true
+  EnforcedStyle: always
+
+Style/ClassAndModuleChildren:
+  Enabled: false
+
+Style/StringLiterals:
+  EnforcedStyle: single_quotes
+
+Style/HashEachMethods:
+  Enabled: true
+
+Style/HashTransformKeys:
+  Enabled: true
+
+Style/HashTransformValues:
+  Enabled: true
