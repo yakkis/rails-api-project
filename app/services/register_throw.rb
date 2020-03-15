@@ -1,17 +1,16 @@
 # frozen_string_literal: true
 
 # Register an amount of downed pins to a game instance
-# NOTE: Scores in this class mean downed pins, not the total game score
 class RegisterThrow
   attr_reader :errors
 
-  def initialize(game, score)
-    @game        = game
-    @throw_score = score
-    @frame_score = 0
-    @frame       = nil
-    @throw       = nil
-    @errors      = []
+  def initialize(game, pins)
+    @game       = game
+    @throw_pins = pins
+    @frame_pins = 0
+    @frame      = nil
+    @throw      = nil
+    @errors     = []
   end
 
   # Create and validate necessary model instances
@@ -26,8 +25,8 @@ class RegisterThrow
     @throw = new_throw
     return false if @throw.invalid?
 
-    # Save the amount of downed pins in this frame to @frame_score
-    @frame_score = calculate_frame_score
+    # Save the amount of downed pins in this frame to @frame_pins
+    @frame_pins = calculate_frame_pins
 
     return false unless valid_frame?
 
@@ -51,56 +50,56 @@ class RegisterThrow
   end
 
   def new_frame(number)
-    frame = Frame.new(game: @game, status: Frame::OPEN, number: number)
+    frame = Frame.new(game: @game, status: Frame::OPEN, number: number, total_score: 0)
     @errors.concat(frame.errors.full_messages) unless frame.valid?
     frame
   end
 
   def new_throw
     number = @frame.throws.count + 1
-    thrw = Throw.new(frame: @frame, score: @throw_score, number: number)
+    thrw = Throw.new(frame: @frame, score: @throw_pins, number: number)
     @errors.concat(thrw.errors.full_messages) unless thrw.valid?
     thrw
   end
 
-  # For the frame, calculate the sum of throws' scores
-  def calculate_frame_score
-    prev_score = @frame.throws.map(&:score).sum
-    prev_score + @throw_score
+  # For the frame, calculate the sum of throws' pins
+  def calculate_frame_pins
+    prev_pins = @frame.throws.map(&:score).sum
+    prev_pins + @throw_pins
   end
 
   # Validate the current frame
   def valid_frame?
-    unless frame_score_valid?
-      @errors.push('Maximum frame score exceeded')
+    unless frame_pins_valid?
+      @errors.push('Maximum frame pins exceeded')
       return false
     end
 
     true
   end
 
-  # Validate score for the current frame
-  def frame_score_valid?
+  # Validate the amount of downed pins for the current frame
+  def frame_pins_valid?
     # Downed pins must be <= 10 for every frame expect the last
-    return @frame_score <= 10 unless @frame.last_frame?
+    return @frame_pins <= 10 unless @frame.last_frame?
     # Downed pins must be <= 10 for last frame's first throw
-    return @frame_score <= 10 if @throw.first_throw?
+    return @frame_pins <= 10 if @throw.first_throw?
 
-    prev_score = @frame_score - @throw_score
+    prev_pins = @frame_pins - @throw_pins
 
     if @throw.second_throw?
       # Downed pins must be <= 10 if the previous throw was not a strike
-      return @frame_score <= 10 if prev_score < 10
+      return @frame_pins <= 10 if prev_pins < 10
 
       # Downed pins must be <= 20 if the previous throw was a strike
-      return @frame_score <= 20
+      return @frame_pins <= 20
     end
 
     # Downed pins must be <= 20 if the two previous throws made a spare
-    return @frame_score <= 20 if prev_score < 20
+    return @frame_pins <= 20 if prev_pins < 20
 
     # Downed pins must be <= 30 if the two previous throws were strikes
-    @frame_score <= 30
+    @frame_pins <= 30
   end
 
   # Determine whether the current frame should be closed
@@ -110,7 +109,7 @@ class RegisterThrow
 
     if @throw.second_throw?
       # Close if on the last frame and frame's throws don't form a spare
-      return @frame_score < 10 if @frame.last_frame?
+      return @frame_pins < 10 if @frame.last_frame?
     end
 
     # Otherwise, always close the frame
@@ -126,10 +125,12 @@ class RegisterThrow
     success = false
 
     ActiveRecord::Base.transaction do
+      # Save the new throw and update game state
       success = @game.save && @frame.save && @throw.save
+      # Game has to be reloaded prior to score calculations
       @game.reload
-      @game.calculate_total_score
-      success &&= @game.save
+      # The throw has been validated and saved, so calculate the total scores
+      success &&= @game.calculate_total_scores
 
       unless success
         @errors.push('Saving to database failed')

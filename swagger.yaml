@@ -65,7 +65,7 @@ paths:
                     example: "ended"
                   total_score:
                     type: integer
-                    example: 123
+                    example: 7
                   timestamp:
                     type: string
                     example: "2020-01-01T10:10:10Z"
@@ -80,6 +80,9 @@ paths:
                         number:
                           type: integer
                           example: 1
+                        total_score:
+                          type: integer
+                          example: 7
                         throws:
                           type: array
                           items:

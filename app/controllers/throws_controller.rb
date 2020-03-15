@@ -5,7 +5,7 @@ class ThrowsController < ApplicationController
 
   # POST /api/games/:game_id/throws
   def create
-    game = Game.includes(:frames, :throws).find_by(id: params[:game_id])
+    game = Game.game_with_associations(params[:game_id])
 
     if game.nil?
       render json: { errors: ['Game not found'] }, status: :not_found

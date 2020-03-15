@@ -22,6 +22,11 @@ class Game < ApplicationRecord
     message: 'must be in range [0, 300]'
   }
 
+  # Find a game by ID and include associations to reduce the amount of DB calls
+  def self.game_with_associations(game_id)
+    Game.includes(:frames, :throws).find_by(id: game_id)
+  end
+
   def attributes
     {
       'id' => 0,
@@ -48,10 +53,11 @@ class Game < ApplicationRecord
     self.status = ENDED
   end
 
-  # Calculate and save the game's total score
+  # Calculate and save the game's and its frames total score
   # rubocop:disable Metrics/AbcSize
-  def calculate_total_score
-    total = 0
+  def calculate_total_scores
+    # Keep track of individual frame scores
+    frame_scores = []
     frame = 1
 
     # Take the first score out of the rest
@@ -61,29 +67,33 @@ class Game < ApplicationRecord
 
     # Loop until all the throw scores have been summed
     loop do
+      temp = 0
+
       # If the first throw is a strike
       if first == 10
         # Add 10 + the score of the next two throws
-        total += 10 + sum_scores(rest, 2)
+        temp = 10 + sum_scores(rest, 2)
       else
         # Take the second score out of the rest
         second, *rest = rest
 
         # Abort if there are no more scores to count
         if second.nil?
-          total += first
+          frame_scores.push(first)
           break
         end
 
         # If the first and second throws form a spare
-        total += if first + second == 10
-                   # Add 10 + the score of the next throw
-                   10 + sum_scores(rest, 1)
-                 else
-                   # Else add the first and second throw scores
-                   first + second
-                 end
+        temp = if first + second == 10
+                 # Add 10 + the score of the next throw
+                 10 + sum_scores(rest, 1)
+               else
+                 # Else add the first and second throw scores
+                 first + second
+               end
       end
+
+      frame_scores.push(temp)
 
       # Abort if processing the last frame
       break if frame >= 10
@@ -97,20 +107,30 @@ class Game < ApplicationRecord
       break if first.nil?
     end
 
-    self.total_score = total
+    success = update(total_score: frame_scores.sum)
+    success &&= update_frame_scores(frame_scores)
+    success
   end
   # rubocop:enable Metrics/AbcSize
 
   private
 
-  # Flatten all game's throw scores into a single array
+  # Game's throw scores in a single array
   # E.g. [2, 3, 0, 7, 5, 5, 8, 1, 10, 5]
   def scores_flattened
-    frames.map { |f| f.throws.map(&:score) }.flatten
+    throws.map(&:score)
   end
 
   # Take 'amount' number of values from 'scores' and sum them up
   def sum_scores(scores, amount)
     scores.take(amount).sum
+  end
+
+  def update_frame_scores(frame_scores)
+    success = true
+    frames.zip(frame_scores).each do |frame, score|
+      success &&= frame.update(total_score: score)
+    end
+    success
   end
 end

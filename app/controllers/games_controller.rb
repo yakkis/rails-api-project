@@ -10,7 +10,7 @@ class GamesController < ApplicationController
 
   # GET /api/games/:id
   def show
-    game = Game.includes(:frames, :throws).find_by(id: params[:id])
+    game = Game.game_with_associations(params[:id])
 
     if game
       render json: game, status: :ok

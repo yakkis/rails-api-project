@@ -10,11 +10,12 @@ class Frame < ApplicationRecord
 
   # A game has a maximum of 10 frames
   MAX_NUMBER = 10
+  # A frame maximum score is 30
+  MAX_TOTAL_SCORE = 30
 
   belongs_to :game
   has_many :throws, dependent: :destroy
 
-  # validate :validate_score
   validates :status, inclusion: { in: STATUSES }
   validates :number, numericality: {
     only_integer: true,
@@ -22,11 +23,18 @@ class Frame < ApplicationRecord
     less_than_or_equal_to: MAX_NUMBER,
     message: 'must be in range [1, 10]'
   }
+  validates :total_score, numericality: {
+    only_integer: true,
+    greater_than_or_equal_to: 0,
+    less_than_or_equal_to: MAX_TOTAL_SCORE,
+    message: 'must be in range [0, 30]'
+  }
 
   def attributes
     {
       'status' => '',
       'number' => 0,
+      'total_score' => 0,
       'throws' => []
     }
   end

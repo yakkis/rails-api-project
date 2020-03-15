@@ -15,6 +15,7 @@ ActiveRecord::Schema.define(version: 2020_03_10_180730) do
   create_table "frames", force: :cascade do |t|
     t.string "status"
     t.integer "number"
+    t.integer "total_score"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.integer "game_id"
