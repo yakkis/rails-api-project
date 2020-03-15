@@ -40,7 +40,7 @@ class RegisterThrow
 
   # Return an open frame where a new throw can be registered
   def open_frame
-    frame = @game.frames.order(:number).last
+    frame = @game.frames.max { |a, b| a.number <=> b.number }
     # Game doesn't have any frames yet, so create the first one
     return new_frame(1) if frame.nil?
     # Last frame is still open, so return it
