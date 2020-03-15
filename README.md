@@ -39,9 +39,9 @@ To download the project repository, do the following:
 $ git clone git@github.com:yakkis/rails-api-project.git
 ```
 
-### Build the project
+### Build and run the project
 
-To set up the project, do the following:
+To build and run the project, use the following commands:
 
 ```
 # Build the project
@@ -50,18 +50,35 @@ $ docker-compose build
 # Run the project
 $ docker-compose up
 
-# The following commands are require for the first time only
+# Stop and remove containers
+$ docker-compose down
+```
 
+The following steps are require when running the project for the first time:
+
+#### Rails master.key and credentials.yml.enc
+
+Rails requires the files 'master.key' and 'credentials.yml.enc' to be present, but those have been removed from the repository due to security concerns. These files can be created by opening them for editing, which causes Rails to recreate them if they are missing.
+
+```
 # Create a new master.key and credentials files (first time only)
+# This command opens `vi` editor showing the content of the credentials file
+# Just save the file and exit
 $ docker-compose exec -e EDITOR="vi" api rails credentials:edit
+```
 
+#### Database initialization
+
+To initialize a database from the `schema.rb` for the current environment ('development' by default), do the following:
+
+```
 # Set up a database (first time only)
 $ docker-compose exec api rails db:setup
 ```
 
 ### Authentication
 
-The API implements a JWT authentication to prevent unauthorized access. To use the API, generate a bearer token using Rails secret_key_base:
+The API implements a JWT authentication to prevent unauthorized access. To use the API, generate a bearer token using Rails secret_key_base. For example:
 
 ```
 # Open Rails console
@@ -74,7 +91,7 @@ $ docker-compose exec api rails console
 => "eyJhBeciOijIUzI5NiJ9.e33.QJb8I85Zzenf-OU-2Uv_bpQp8NI2yKjFAJ_x5NbHaAw"
 ```
 
-Then add the token to request header, for example:
+Then add the token to a request header, for example:
 
 ```
 $ curl -X POST --header "Authorization: Bearer eyJhBeciOijIUzI5NiJ9.e33.QJb8I85Zzenf-OU-2Uv_bpQp8NI2yKjFAJ_x5NbHaAw" localhost:3000/api/games
