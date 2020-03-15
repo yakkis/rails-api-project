@@ -27,8 +27,6 @@ group :development, :test do
   gem 'rspec-rails', '~> 3.9'
   # Ruby on Rails static analysis security tool
   gem 'brakeman'
-  # Bullet to reduce the amount of database queries
-  gem 'bullet'
 end
 
 group :development do
