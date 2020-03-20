@@ -122,3 +122,11 @@ Running all tests using the project's Docker image:
 # Run the shell script in the project's root
 $ ./test.sh
 ```
+
+### Coverage
+
+This project utilizes Gem SimpleCov to generate test code coverage reports and to enforce a minimum code coverage percentage.
+
+SimpleCov configurations are in the file `spec/spec_helper.rb`.
+
+When Rspec tests are run, as described in the section above, SimpleCov generates test coverage reports to the folder `coverage`. Just open the `index.html` file and browse the reports.
