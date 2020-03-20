@@ -12,7 +12,6 @@ class CreateTables < ActiveRecord::Migration[6.0]
     create_table :frames do |t|
       t.string :status
       t.integer :number
-      t.integer :total_score
 
       t.timestamps
     end

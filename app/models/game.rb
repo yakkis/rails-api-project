@@ -53,65 +53,19 @@ class Game < ApplicationRecord
     self.status = ENDED
   end
 
-  # Calculate and save the game's and its frames total score
-  # rubocop:disable Metrics/AbcSize
-  def calculate_total_scores
-    # Keep track of individual frame scores
-    frame_scores = []
-    frame = 1
-
-    # Take the first score out of the rest
-    first, *rest = scores_flattened
+  # Calculate and save game's total score
+  # Returns a boolean indicating whether the total_score update succeeded of not
+  def calculate_total_score
+    # Get scores for all the game frames in a single array
+    scores = scores_flattened
     # Abort if the game has no frames
-    return if first.nil?
+    return if scores[0].nil?
 
-    # Loop until all the throw scores have been summed
-    loop do
-      temp = 0
+    # Call frame scoring loop with initial values
+    frame_scores = scoring_loop([], 1, scores)
 
-      # If the first throw is a strike
-      if first == 10
-        # Add 10 + the score of the next two throws
-        temp = 10 + sum_scores(rest, 2)
-      else
-        # Take the second score out of the rest
-        second, *rest = rest
-
-        # Abort if there are no more scores to count
-        if second.nil?
-          frame_scores.push(first)
-          break
-        end
-
-        # If the first and second throws form a spare
-        temp = if first + second == 10
-                 # Add 10 + the score of the next throw
-                 10 + sum_scores(rest, 1)
-               else
-                 # Else add the first and second throw scores
-                 first + second
-               end
-      end
-
-      frame_scores.push(temp)
-
-      # Abort if processing the last frame
-      break if frame >= 10
-
-      # Increment the frame number
-      frame += 1
-      # Reassign the first and rest variables and loop again
-      first, *rest = rest
-
-      # Abort if there are no more scores to count
-      break if first.nil?
-    end
-
-    success = update(total_score: frame_scores.sum)
-    success &&= update_frame_scores(frame_scores)
-    success
+    update(total_score: frame_scores.sum)
   end
-  # rubocop:enable Metrics/AbcSize
 
   private
 
@@ -121,16 +75,45 @@ class Game < ApplicationRecord
     throws.map(&:score)
   end
 
-  # Take 'amount' number of values from 'scores' and sum them up
-  def sum_scores(scores, amount)
-    scores.take(amount).sum
+  # Recursively execute scoring_loop until all the frame scores have been calculated
+  def scoring_loop(result, frame, scores)
+    # Take the first score out of the rest
+    first, *rest = scores
+
+    # Calculate frame's total score
+    temp = if first == 10
+             # If strike, return 10 + the sum of the next two throws
+             sum_scores(rest, 2)
+           else
+             second, *rest = rest
+             # If the frame is incomplete, add the first throw's score and return
+             return result.push(first) if second.nil?
+
+             # Calculate the total score for a frame with two throws
+             two_throw_frame_score(first, second, rest)
+           end
+
+    result.push(temp)
+
+    # Abort if there are no more scores to count or if processing the last frame
+    return result if rest.empty? || frame >= 10
+
+    # Loop again with new values
+    scoring_loop(result, frame + 1, rest)
   end
 
-  def update_frame_scores(frame_scores)
-    success = true
-    frames.zip(frame_scores).each do |frame, score|
-      success &&= frame.update(total_score: score)
-    end
-    success
+  # Calculate the total score for a strike or a spare
+  # Takes 10 and 'amount' number of values from 'scores' and sum them up
+  def sum_scores(scores, amount)
+    10 + scores.take(amount).sum
+  end
+
+  # Calculate the total score for a frame
+  def two_throw_frame_score(first, second, rest)
+    # If the first and second throws form a spare,
+    # add 10 + the score of the next throw,
+    # else return frame's first and second scores summed
+    frame_total = first + second
+    frame_total == 10 ? sum_scores(rest, 1) : frame_total
   end
 end

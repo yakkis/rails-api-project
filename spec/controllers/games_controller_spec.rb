@@ -53,9 +53,9 @@ RSpec.describe GamesController, type: :controller do
 
     it 'returns a game status' do
       game = Game.create(status: Game::ONGOING, total_score: 0)
-      frame = Frame.create(game: game, status: Frame::OPEN, number: 1, total_score: 0)
+      frame = Frame.create(game: game, status: Frame::OPEN, number: 1)
       Throw.create(frame: frame, score: 5, number: 1)
-      game.calculate_total_scores
+      game.calculate_total_score
 
       expected = {
         'id' => 1,
@@ -66,7 +66,6 @@ RSpec.describe GamesController, type: :controller do
           {
             'status' => 'open',
             'number' => 1,
-            'total_score' => 5,
             'throws' => [
               {
                 'score' => 5,

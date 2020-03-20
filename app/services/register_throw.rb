@@ -50,7 +50,7 @@ class RegisterThrow
   end
 
   def new_frame(number)
-    frame = Frame.new(game: @game, status: Frame::OPEN, number: number, total_score: 0)
+    frame = Frame.new(game: @game, status: Frame::OPEN, number: number)
     @errors.concat(frame.errors.full_messages) unless frame.valid?
     frame
   end
@@ -130,7 +130,7 @@ class RegisterThrow
       # Game has to be reloaded prior to score calculations
       @game.reload
       # The throw has been validated and saved, so calculate the total scores
-      success &&= @game.calculate_total_scores
+      success &&= @game.calculate_total_score
 
       unless success
         @errors.push('Saving to database failed')

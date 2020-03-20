@@ -10,6 +10,11 @@ AllCops:
 Rails:
   Enabled: true
 
+# Increase the default Rubocop length limitations.
+# In many cases the default limits are too strict for any nontrivial functionality.
+# Following the limits can end up splitting even relatively simple functionality
+# into many functions/methods which can hurt readability instead of increasing it.
+
 Metrics/ClassLength:
   Max: 100
 
