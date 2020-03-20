@@ -5,12 +5,13 @@ class RegisterThrow
   attr_reader :errors
 
   def initialize(game, pins)
-    @game       = game
-    @throw_pins = pins
-    @frame_pins = 0
-    @frame      = nil
-    @throw      = nil
-    @errors     = []
+    @game          = game
+    @throw_pins    = pins
+    @frame_pins    = 0
+    @previous_pins = 0
+    @frame         = nil
+    @throw         = nil
+    @errors        = []
   end
 
   # Create and validate necessary model instances
@@ -25,9 +26,8 @@ class RegisterThrow
     @throw = new_throw
     return false if @throw.invalid?
 
-    # Save the amount of downed pins in this frame to @frame_pins
-    @frame_pins = calculate_frame_pins
-
+    # Save the amount of downed pins in this frame
+    @previous_pins, @frame_pins = calculate_frame_pins
     return false unless valid_frame?
 
     @frame.close if close_frame?
@@ -64,13 +64,14 @@ class RegisterThrow
 
   # For the frame, calculate the sum of throws' pins
   def calculate_frame_pins
-    prev_pins = @frame.throws.map(&:score).sum
-    prev_pins + @throw_pins
+    previous_pins = @frame.throws.map(&:score).sum
+    current_pins  = previous_pins + @throw_pins
+    [previous_pins, current_pins]
   end
 
-  # Validate the current frame
   def valid_frame?
-    unless frame_pins_valid?
+    # Validate frame's throws
+    unless valid_frame_throws?
       @errors.push('Maximum frame pins exceeded')
       return false
     end
@@ -78,41 +79,52 @@ class RegisterThrow
     true
   end
 
-  # Validate the amount of downed pins for the current frame
-  def frame_pins_valid?
+  # Validate downed pins for the current frame
+  def valid_frame_throws?
     # Downed pins must be <= 10 for every frame expect the last
     return @frame_pins <= 10 unless @frame.last_frame?
+    return valid_last_frame_first_throw? if @throw.first_throw?
+    return valid_last_frame_nth_throw?(10) if @throw.second_throw?
+    return valid_last_frame_nth_throw?(20) if @throw.third_throw?
+  end
+
+  def valid_last_frame_first_throw?
     # Downed pins must be <= 10 for last frame's first throw
-    return @frame_pins <= 10 if @throw.first_throw?
+    @frame_pins <= 10
+  end
 
-    prev_pins = @frame_pins - @throw_pins
+  def valid_last_frame_nth_throw?(base)
+    # On the second throw, pins must be <= 10 if the previous throw was not a strike
+    # On the third throw, pins must be <= 20 if the two previous throws made a spare
+    return @frame_pins <= base if @previous_pins < base
 
-    if @throw.second_throw?
-      # Downed pins must be <= 10 if the previous throw was not a strike
-      return @frame_pins <= 10 if prev_pins < 10
-
-      # Downed pins must be <= 20 if the previous throw was a strike
-      return @frame_pins <= 20
-    end
-
-    # Downed pins must be <= 20 if the two previous throws made a spare
-    return @frame_pins <= 20 if prev_pins < 20
-
-    # Downed pins must be <= 30 if the two previous throws were strikes
-    @frame_pins <= 30
+    # On the second throw, pins must be <= 20 if the previous throw was a strike
+    # On the third throw, pins must be <= 30 if the two previous throws were strikes
+    @frame_pins <= base + 10
   end
 
   # Determine whether the current frame should be closed
   def close_frame?
-    # Close if the throw is a strike, but not on the last frame
-    return @throw.strike? && !@frame.last_frame? if @throw.first_throw?
+    return close_normal_frame? unless @frame.last_frame?
 
-    if @throw.second_throw?
-      # Close if on the last frame and frame's throws don't form a spare
-      return @frame_pins < 10 if @frame.last_frame?
-    end
+    close_last_frame?
+  end
 
-    # Otherwise, always close the frame
+  def close_normal_frame?
+    # Close the frame if the first throw is a strike
+    return @throw.strike? if @throw.first_throw?
+
+    # Otherwise, always close the frame on the second throw
+    true
+  end
+
+  def close_last_frame?
+    # Last frame's first throw never closes a frame
+    return false if @throw.first_throw?
+    # Close if the last frame's second throw doesn't make a spare
+    return @frame_pins < 10 if @throw.second_throw?
+
+    # Otherwise, the third throw always closes the last frame
     true
   end
 

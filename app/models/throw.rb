@@ -40,6 +40,10 @@ class Throw < ApplicationRecord
     number == 2
   end
 
+  def third_throw?
+    number == 3
+  end
+
   def strike?
     score >= MAX_SCORE
   end
