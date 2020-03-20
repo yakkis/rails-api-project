@@ -57,7 +57,8 @@ class Game < ApplicationRecord
   # Returns a boolean indicating whether the total_score update succeeded of not
   def calculate_total_score
     # Get scores for all the game frames in a single array
-    scores = scores_flattened
+    # E.g. [2, 3, 0, 7, 5, 5, 8, 1, 10, 5]
+    scores = throws.map(&:score)
     # Abort if the game has no frames
     return if scores[0].nil?
 
@@ -68,12 +69,6 @@ class Game < ApplicationRecord
   end
 
   private
-
-  # Game's throw scores in a single array
-  # E.g. [2, 3, 0, 7, 5, 5, 8, 1, 10, 5]
-  def scores_flattened
-    throws.map(&:score)
-  end
 
   # Recursively execute scoring_loop until all the frame scores have been calculated
   def scoring_loop(result, frame, scores)
