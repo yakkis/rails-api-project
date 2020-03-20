@@ -41,10 +41,6 @@ class Game < ApplicationRecord
     updated_at.iso8601
   end
 
-  def ongoing?
-    status == ONGOING
-  end
-
   def ended?
     status == ENDED
   end
@@ -60,7 +56,7 @@ class Game < ApplicationRecord
     # E.g. [2, 3, 0, 7, 5, 5, 8, 1, 10, 5]
     scores = throws.map(&:score)
     # Abort if the game has no frames
-    return if scores[0].nil?
+    return true if scores[0].nil?
 
     # Call frame scoring loop with initial values
     frame_scores = scoring_loop([], 1, scores)

@@ -90,6 +90,13 @@ RSpec.describe GamesController, type: :controller do
       expect(response).to have_http_status(:unauthorized)
     end
 
+    it 'return HTTP status 500 when game creation fails' do
+      request.headers.merge!(auth_header)
+      allow_any_instance_of(Game).to receive(:save).and_return(false)
+      post :create
+      expect(response).to have_http_status(:internal_server_error)
+    end
+
     it 'creates a new game' do
       request.headers.merge!(auth_header)
       post :create

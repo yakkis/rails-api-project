@@ -129,6 +129,20 @@ RSpec.describe ThrowsController, type: :controller do
       expect(response).to have_http_status(:unprocessable_entity)
     end
 
+    it 'handles invalid score' do
+      request.headers.merge!(auth_header)
+      params = { game_id: @game.id, throw: { score: 11 } }
+      post :create, params: params, as: :json
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it 'does not add throws to a non-existent game' do
+      request.headers.merge!(auth_header)
+      params = { game_id: '12345', throw: { score: 1 } }
+      post :create, params: params, as: :json
+      expect(response).to have_http_status(:not_found)
+    end
+
     it 'does not add throws to a closed game' do
       [10, 10, 10, 10, 10, 10, 10, 10, 10, 0, 0].each do |score|
         request.headers.merge!(auth_header)
@@ -144,6 +158,14 @@ RSpec.describe ThrowsController, type: :controller do
       params = { game_id: @game.id, throw: { score: 1 } }
       post :create, params: params, as: :json
       expect(response).to have_http_status(:bad_request)
+    end
+
+    it 'handles database errors' do
+      request.headers.merge!(auth_header)
+      allow_any_instance_of(Game).to receive(:calculate_total_score).and_return(false)
+      params = { game_id: @game.id, throw: { score: 1 } }
+      post :create, params: params, as: :json
+      expect(response).to have_http_status(:unprocessable_entity)
     end
   end
 end

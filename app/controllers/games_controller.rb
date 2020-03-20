@@ -26,7 +26,7 @@ class GamesController < ApplicationController
     if game.save
       render json: game, status: :created
     else
-      render json: game.errors, status: :unprocessable_entity
+      render json: game.errors, status: :internal_server_error
     end
   end
 end
